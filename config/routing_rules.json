@@ -1,0 +1,32 @@
+[
+  {
+    "doc_type": "invoice",
+    "destination": "finance",
+    "description": "All invoices go to Finance (SAP/D365)",
+    "conditions": {}
+  },
+  {
+    "doc_type": "contract",
+    "destination": "crm",
+    "description": "Contracts go to CRM for relationship tracking",
+    "conditions": {}
+  },
+  {
+    "doc_type": "email",
+    "destination": "crm",
+    "description": "Customer emails go to CRM",
+    "conditions": {}
+  },
+  {
+    "doc_type": "compliance",
+    "destination": "compliance",
+    "description": "Compliance documents go to the audit register",
+    "conditions": {}
+  },
+  {
+    "doc_type": "unknown",
+    "destination": "unroutable",
+    "description": "Unknown types are escalated — never silently dropped",
+    "conditions": {}
+  }
+]

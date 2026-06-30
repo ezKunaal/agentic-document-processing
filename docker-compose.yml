@@ -1,0 +1,104 @@
+version: "3.9"
+
+services:
+
+  # ── Main document processing API ────────────────────────────────────────────
+  doc-agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LOCAL_DEV=true
+      - CONFIDENCE_THRESHOLD=0.80
+      # ── Uncomment and fill for real Azure services ──
+      # - AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;...
+      # - SERVICE_BUS_CONNECTION_STRING=Endpoint=sb://...
+      # - AZURE_OPENAI_ENDPOINT=https://your-instance.openai.azure.com/
+      # - AZURE_OPENAI_KEY=<your-key>
+      # - AZURE_OPENAI_DEPLOYMENT=gpt-4o
+      # - DOC_INTELLIGENCE_ENDPOINT=https://your-instance.cognitiveservices.azure.com/
+      # - DOC_INTELLIGENCE_KEY=<your-key>
+      # - APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...
+    volumes:
+      - .:/app   # live reload in dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Stub Finance API ────────────────────────────────────────────────────────
+  finance-stub:
+    image: python:3.12-slim
+    command: >
+      python -c "
+      from http.server import HTTPServer, BaseHTTPRequestHandler
+      import json
+
+      class H(BaseHTTPRequestHandler):
+          def do_POST(self):
+              l = int(self.headers.get('Content-Length', 0))
+              body = self.rfile.read(l)
+              print(f'[FINANCE] Received: {body.decode()}')
+              self.send_response(200)
+              self.send_header('Content-Type', 'application/json')
+              self.end_headers()
+              self.wfile.write(json.dumps({'status':'accepted','ref':'FIN-STUB-001'}).encode())
+          def log_message(self, *a): pass
+
+      print('[FINANCE STUB] Listening on :9001')
+      HTTPServer(('0.0.0.0', 9001), H).serve_forever()
+      "
+    ports:
+      - "9001:9001"
+
+  # ── Stub CRM API ────────────────────────────────────────────────────────────
+  crm-stub:
+    image: python:3.12-slim
+    command: >
+      python -c "
+      from http.server import HTTPServer, BaseHTTPRequestHandler
+      import json
+
+      class H(BaseHTTPRequestHandler):
+          def do_POST(self):
+              l = int(self.headers.get('Content-Length', 0))
+              body = self.rfile.read(l)
+              print(f'[CRM] Received: {body.decode()}')
+              self.send_response(200)
+              self.send_header('Content-Type', 'application/json')
+              self.end_headers()
+              self.wfile.write(json.dumps({'status':'created','ref':'CRM-STUB-001'}).encode())
+          def log_message(self, *a): pass
+
+      print('[CRM STUB] Listening on :9002')
+      HTTPServer(('0.0.0.0', 9002), H).serve_forever()
+      "
+    ports:
+      - "9002:9002"
+
+  # ── Stub Compliance API ─────────────────────────────────────────────────────
+  compliance-stub:
+    image: python:3.12-slim
+    command: >
+      python -c "
+      from http.server import HTTPServer, BaseHTTPRequestHandler
+      import json
+
+      class H(BaseHTTPRequestHandler):
+          def do_POST(self):
+              l = int(self.headers.get('Content-Length', 0))
+              body = self.rfile.read(l)
+              print(f'[COMPLIANCE] Received: {body.decode()}')
+              self.send_response(200)
+              self.send_header('Content-Type', 'application/json')
+              self.end_headers()
+              self.wfile.write(json.dumps({'status':'filed','ref':'COMP-STUB-001'}).encode())
+          def log_message(self, *a): pass
+
+      print('[COMPLIANCE STUB] Listening on :9003')
+      HTTPServer(('0.0.0.0', 9003), H).serve_forever()
+      "
+    ports:
+      - "9003:9003"

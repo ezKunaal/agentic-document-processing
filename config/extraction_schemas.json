@@ -1,0 +1,29 @@
+{
+  "invoice": {
+    "required_fields": ["vendor_name", "invoice_number", "amount", "due_date"],
+    "optional_fields": ["po_number", "tax_amount", "line_items", "currency"],
+    "validation_rules": {
+      "amount_max": 1000000,
+      "require_po_above": 10000
+    }
+  },
+  "contract": {
+    "required_fields": ["party_a", "party_b", "effective_date", "contract_type"],
+    "optional_fields": ["expiry_date", "value", "governing_law", "signatory"],
+    "validation_rules": {
+      "require_signatory": true
+    }
+  },
+  "email": {
+    "required_fields": ["sender", "subject", "received_date"],
+    "optional_fields": ["recipient", "body_summary", "attachments"],
+    "validation_rules": {}
+  },
+  "compliance": {
+    "required_fields": ["regulation_ref", "entity", "submission_date"],
+    "optional_fields": ["jurisdiction", "officer_name", "document_ref"],
+    "validation_rules": {
+      "require_officer": true
+    }
+  }
+}

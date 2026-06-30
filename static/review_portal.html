@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Document Review Portal — Rapid Circle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f4f8; color: #1a202c; }
+    .header { background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%); color: white; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { background: white; color: #0078d4; font-weight: 800; font-size: 18px; padding: 6px 12px; border-radius: 6px; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header-subtitle { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .azure-badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+    .azure-dot { width: 8px; height: 8px; background: #50fa7b; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .stats-bar { background: white; border-bottom: 1px solid #e2e8f0; padding: 12px 32px; display: flex; gap: 32px; align-items: center; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-value { font-size: 22px; font-weight: 700; color: #0078d4; }
+    .stat-label { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value.red { color: #e53e3e; } .stat-value.green { color: #38a169; } .stat-value.orange { color: #dd6b20; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+    .section-title { font-size: 13px; font-weight: 600; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+    .doc-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow 0.2s; }
+    .doc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .doc-card.sla-breached { border-left: 4px solid #e53e3e; } .doc-card.sla-ok { border-left: 4px solid #0078d4; }
+    .card-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f4f8; cursor: pointer; }
+    .card-header:hover { background: #f8fafc; }
+    .card-title-row { display: flex; align-items: center; gap: 12px; }
+    .doc-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: #ebf8ff; }
+    .doc-name { font-weight: 600; font-size: 15px; } .doc-meta { font-size: 12px; color: #718096; margin-top: 2px; }
+    .badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-type { background: #ebf8ff; color: #2b6cb0; } .badge-confidence { background: #f0fff4; color: #276749; }
+    .badge-confidence.low { background: #fff5f5; color: #c53030; } .badge-reason { background: #fffaf0; color: #c05621; }
+    .badge-sla-ok { background: #f0fff4; color: #276749; } .badge-sla-breach { background: #fff5f5; color: #c53030; }
+    .chevron { font-size: 12px; color: #a0aec0; transition: transform 0.2s; } .chevron.open { transform: rotate(180deg); }
+    .card-body { display: none; padding: 20px; } .card-body.open { display: block; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+    .field-group { margin-bottom: 12px; }
+    .field-label { font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .field-value { font-size: 14px; color: #2d3748; background: white; border: 1px solid #bee3f8; border-radius: 6px; padding: 8px 12px; }
+    .field-value input { width: 100%; border: none; outline: none; font-size: 14px; color: #2d3748; background: transparent; }
+    .field-value.readonly { background: #f7fafc; border-color: #e2e8f0; }
+    .errors-box { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
+    .errors-title { font-size: 12px; font-weight: 700; color: #c53030; margin-bottom: 6px; }
+    .error-item { font-size: 13px; color: #742a2a; padding: 2px 0; }
+    .audit-trail { background: #1a202c; border-radius: 8px; padding: 16px; margin-top: 16px; }
+    .audit-title { font-size: 11px; font-weight: 700; color: #68d391; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .audit-entry { display: flex; gap: 12px; margin-bottom: 8px; font-size: 12px; font-family: monospace; }
+    .audit-time { color: #718096; min-width: 80px; } .audit-agent { color: #63b3ed; min-width: 90px; }
+    .audit-action { color: #f6e05e; min-width: 100px; } .audit-detail { color: #a0aec0; }
+    .action-bar { display: flex; gap: 12px; align-items: center; padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    .reviewer-input { flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; }
+    .btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .btn-approve { background: #38a169; color: white; } .btn-approve:hover { background: #2f855a; transform: translateY(-1px); }
+    .btn-reject { background: #e53e3e; color: white; } .btn-reject:hover { background: #c53030; transform: translateY(-1px); }
+    .btn-secondary { background: white; color: #4a5568; border: 1px solid #e2e8f0; }
+    .card-resolved { background: #f0fff4 !important; border-left-color: #38a169 !important; }
+    .card-rejected { background: #fff5f5 !important; border-left-color: #e53e3e !important; }
+    .resolved-banner { padding: 14px 20px; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .resolved-banner.approved { color: #276749; } .resolved-banner.rejected { color: #c53030; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #718096; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; } .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #2d3748; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transform: translateY(100px); transition: transform 0.3s; z-index: 1000; }
+    .toast.show { transform: translateY(0); } .toast.success { border-left: 4px solid #38a169; } .toast.error { border-left: 4px solid #e53e3e; }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">RC</div>
+    <div><h1>Document Review Portal</h1><div class="header-subtitle">Agentic Document Processing — Human-in-the-Loop (Azure Service Bus)</div></div>
+  </div>
+  <div class="azure-badge"><div class="azure-dot"></div>Live · Azure Service Bus Queue</div>
+</div>
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Pending Review</div></div>
+  <div class="stat"><div class="stat-value red" id="stat-breached">—</div><div class="stat-label">SLA Breached</div></div>
+  <div class="stat"><div class="stat-value orange" id="stat-amount">—</div><div class="stat-label">High Value</div></div>
+  <div class="stat"><div class="stat-value green" id="stat-resolved">0</div><div class="stat-label">Resolved This Session</div></div>
+  <div style="margin-left:auto"><button class="btn btn-secondary" onclick="loadQueue()" style="padding:8px 16px;font-size:13px;">🔄 Refresh</button></div>
+</div>
+<div class="container">
+  <div class="section-title">📋 Documents Awaiting Human Review</div>
+  <div id="queue-container"><div style="text-align:center;padding:40px;color:#718096">Loading from Azure Service Bus...</div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API = 'http://127.0.0.1:8000';
+let resolvedCount = 0;
+const ICONS = { invoice:'🧾', contract:'📄', email:'✉️', compliance:'🏛️', unknown:'❓' };
+
+async function loadQueue() {
+  try {
+    const resp = await fetch(`${API}/review/`);
+    const items = await resp.json();
+    document.getElementById('stat-total').textContent = items.length;
+    document.getElementById('stat-breached').textContent = items.filter(i=>i.sla_breached).length;
+    document.getElementById('stat-amount').textContent = items.filter(i=>i.escalation_reason==='amount_exceeds_threshold').length;
+    const container = document.getElementById('queue-container');
+    if (items.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">All clear — no documents pending review</div><p>The AI pipeline is handling everything automatically.</p></div>`;
+      return;
+    }
+    container.innerHTML = items.map(item => buildCard(item)).join('');
+  } catch(e) {
+    document.getElementById('queue-container').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Cannot connect to API</div><p>Make sure the server is running on port 8000</p></div>`;
+  }
+}
+
+function buildCard(item) {
+  const icon = ICONS[item.doc_type] || '📎';
+  const confClass = item.confidence < 0.80 ? 'low' : '';
+  const slaClass = item.sla_breached ? 'sla-breached' : 'sla-ok';
+  const slaBadge = item.sla_breached ? `<span class="badge badge-sla-breach">🔴 SLA Breached</span>` : `<span class="badge badge-sla-ok">🟢 SLA OK</span>`;
+  const deadline = new Date(item.sla_deadline).toLocaleString('en-AU', {timeZone: 'Australia/Sydney', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const queued = new Date(item.queued_at).toLocaleString('en-AU', {timeZone: 'Australia/Sydney', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const fields = Object.entries(item.extracted_fields || {}).map(([key, val]) => `
+    <div class="field-group">
+      <div class="field-label">${key.replace(/_/g,' ')}</div>
+      <div class="field-value"><input type="text" id="field-${item.doc_id}-${key}" value="${val !== null ? val : ''}" placeholder="(empty)"/></div>
+    </div>`).join('');
+  const errors = (item.validation_errors || []).map(e => `<div class="error-item">⚠️ ${e}</div>`).join('');
+  const audit = (item.audit_trail || []).map(e => `
+    <div class="audit-entry">
+      <span class="audit-time">${(e.timestamp||'').substring(11,19)}</span>
+      <span class="audit-agent">${e.agent}</span>
+      <span class="audit-action">${e.action}</span>
+      <span class="audit-detail">${e.detail||''}</span>
+    </div>`).join('');
+  return `
+    <div class="doc-card ${slaClass}" id="card-${item.doc_id}">
+      <div class="card-header" onclick="toggleCard('${item.doc_id}')">
+        <div class="card-title-row">
+          <div class="doc-icon">${icon}</div>
+          <div><div class="doc-name">${item.filename}</div><div class="doc-meta">Queued: ${queued} · SLA: ${deadline}</div></div>
+        </div>
+        <div class="badges">
+          <span class="badge badge-type">${item.doc_type}</span>
+          <span class="badge badge-confidence ${confClass}">${(item.confidence*100).toFixed(0)}% confident</span>
+          <span class="badge badge-reason">${(item.escalation_reason||'').replace(/_/g,' ')}</span>
+          ${slaBadge}
+          <span class="chevron" id="chevron-${item.doc_id}">▼</span>
+        </div>
+      </div>
+      <div class="card-body" id="body-${item.doc_id}">
+        ${errors ? `<div class="errors-box"><div class="errors-title">⚠️ Validation Issues</div>${errors}</div>` : ''}
+        <div class="section-title" style="margin-bottom:12px">📝 Extracted Fields — Edit if incorrect</div>
+        <div class="three-col">${fields}</div>
+        <div class="two-col">
+          <div class="field-group">
+            <div class="field-label">Document Type</div>
+            <div class="field-value">
+              <select id="dtype-${item.doc_id}" style="width:100%;border:none;outline:none;font-size:14px;background:transparent">
+                <option value="invoice" ${item.doc_type==='invoice'?'selected':''}>🧾 Invoice</option>
+                <option value="contract" ${item.doc_type==='contract'?'selected':''}>📄 Contract</option>
+                <option value="email" ${item.doc_type==='email'?'selected':''}>✉️ Email</option>
+                <option value="compliance" ${item.doc_type==='compliance'?'selected':''}>🏛️ Compliance</option>
+                <option value="unknown" ${item.doc_type==='unknown'?'selected':''}>❓ Unknown</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Escalation Note</div>
+            <div class="field-value readonly">${item.escalation_note || item.escalation_reason || '—'}</div>
+          </div>
+        </div>
+        <div class="audit-trail">
+          <div class="audit-title">🔍 Azure Cosmos DB — Full Audit Trail</div>
+          ${audit || '<div style="color:#718096;font-size:12px">No audit entries</div>'}
+        </div>
+      </div>
+      <div class="action-bar" id="actions-${item.doc_id}">
+        <input class="reviewer-input" id="reviewer-${item.doc_id}" placeholder="Your name (reviewer)" />
+        <button class="btn btn-reject" onclick="handleReject('${item.doc_id}')">✕ Reject</button>
+        <button class="btn btn-approve" onclick="handleApprove('${item.doc_id}')">✓ Approve & Route</button>
+      </div>
+    </div>`;
+}
+
+function toggleCard(docId) {
+  document.getElementById(`body-${docId}`).classList.toggle('open');
+  document.getElementById(`chevron-${docId}`).classList.toggle('open');
+}
+
+async function handleApprove(docId) {
+  const reviewer = document.getElementById(`reviewer-${docId}`).value.trim() || 'human-reviewer';
+  const docType = document.getElementById(`dtype-${docId}`).value;
+  const fields = {};
+  document.querySelectorAll(`[id^="field-${docId}-"]`).forEach(input => {
+    const key = input.id.replace(`field-${docId}-`, '');
+    const val = input.value.trim();
+    if (val) fields[key] = isNaN(val) ? val : Number(val);
+  });
+  try {
+    const resp = await fetch(`${API}/review/${docId}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewer, doc_type: docType, extracted_fields: fields })
+    });
+    const result = await resp.json();
+    if (resp.ok) {
+      document.getElementById(`card-${docId}`).classList.add('card-resolved');
+      document.getElementById(`actions-${docId}`).innerHTML = `<div class="resolved-banner approved">✅ Approved by ${reviewer} — Routed to <strong>${result.destination}</strong> · Status: <strong>${result.status}</strong></div>`;
+      resolvedCount++;
+      document.getElementById('stat-resolved').textContent = resolvedCount;
+      showToast(`✅ Approved and routed to ${result.destination}`, 'success');
+    } else {
+      showToast('❌ Failed: ' + (result.detail || 'Unknown error'), 'error');
+    }
+  } catch(e) { showToast('❌ Connection error', 'error'); }
+}
+
+function handleReject(docId) {
+  const reviewer = document.getElementById(`reviewer-${docId}`).value.trim() || 'human-reviewer';
+  document.getElementById(`card-${docId}`).classList.add('card-rejected');
+  document.getElementById(`actions-${docId}`).innerHTML = `<div class="resolved-banner rejected">✕ Rejected by ${reviewer} — Archived to Azure Service Bus rejected queue</div>`;
+  resolvedCount++;
+  document.getElementById('stat-resolved').textContent = resolvedCount;
+  showToast('Document rejected and archived', 'error');
+}
+
+function showToast(message, type='success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+loadQueue();
+setInterval(loadQueue, 30000);
+</script>
+</body>
+</html>
