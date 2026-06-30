@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agentic Document Processing API — Rapid Circle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0A1628;
+      color: #E2E8F0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0A1628 0%, #0D2040 100%);
+      border-bottom: 1px solid rgba(0,120,212,0.3);
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      background: #0078D4;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+    .api-title { font-size: 20px; font-weight: 700; color: white; }
+    .api-subtitle { font-size: 12px; color: #64748B; margin-top: 2px; }
+    .version-badges { display: flex; gap: 8px; }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-version { background: rgba(0,120,212,0.2); color: #60A5FA; border: 1px solid rgba(0,120,212,0.4); }
+    .badge-live { background: rgba(16,185,129,0.2); color: #34D399; border: 1px solid rgba(16,185,129,0.4); display: flex; align-items: center; gap: 5px; }
+    .live-dot { width: 6px; height: 6px; background: #34D399; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── Layout ── */
+    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 80px); }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: #0D1F35;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      padding: 24px 0;
+      position: sticky;
+      top: 80px;
+      height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+    .sidebar-section { margin-bottom: 8px; }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 20px 4px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 2px solid transparent;
+      font-size: 13px;
+      color: #94A3B8;
+      text-decoration: none;
+    }
+    .sidebar-link:hover { background: rgba(0,120,212,0.1); color: #E2E8F0; border-left-color: #0078D4; }
+    .sidebar-link.active { background: rgba(0,120,212,0.15); color: white; border-left-color: #0078D4; }
+    .method-pill {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      min-width: 36px;
+      text-align: center;
+    }
+    .pill-post { background: rgba(16,185,129,0.2); color: #34D399; }
+    .pill-get  { background: rgba(96,165,250,0.2); color: #60A5FA; }
+
+    /* ── Main content ── */
+    .main { padding: 40px 48px; max-width: 900px; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, rgba(0,120,212,0.15) 0%, rgba(13,148,136,0.1) 100%);
+      border: 1px solid rgba(0,120,212,0.25);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+    .hero-title { font-size: 26px; font-weight: 800; color: white; margin-bottom: 8px; }
+    .hero-title span { color: #0078D4; }
+    .hero-desc { font-size: 14px; color: #94A3B8; line-height: 1.6; margin-bottom: 24px; }
+    .hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+    .hero-stat { text-align: center; }
+    .hero-stat-val { font-size: 22px; font-weight: 800; color: #0078D4; }
+    .hero-stat-lbl { font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* ── Pipeline visual ── */
+    .pipeline {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .pipeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 14px;
+    }
+    .step-circle {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .step-label { font-size: 11px; color: #94A3B8; text-align: center; }
+    .step-arrow { color: #1E3A5F; font-size: 18px; font-weight: 300; padding: 0 4px; margin-top: -16px; }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .section-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: white; }
+    .section-subtitle { font-size: 12px; color: #64748B; margin-top: 2px; }
+
+    /* ── Endpoint cards ── */
+    .endpoint-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .endpoint-card:hover { border-color: rgba(0,120,212,0.4); }
+
+    .endpoint-header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .endpoint-header:hover { background: rgba(255,255,255,0.02); }
+
+    .method-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      min-width: 48px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .method-post { background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3); }
+    .method-get  { background: rgba(96,165,250,0.15); color: #60A5FA; border: 1px solid rgba(96,165,250,0.3); }
+
+    .endpoint-path {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13.5px;
+      color: white;
+      font-weight: 500;
+    }
+    .endpoint-desc { font-size: 12px; color: #64748B; margin-left: auto; }
+    .chevron-btn { color: #475569; font-size: 11px; transition: transform 0.2s; margin-left: 8px; }
+    .chevron-btn.open { transform: rotate(180deg); }
+
+    .endpoint-body { display: none; padding: 0 20px 20px; }
+    .endpoint-body.open { display: block; }
+
+    .body-desc { font-size: 13px; color: #94A3B8; margin-bottom: 16px; line-height: 1.6; }
+
+    /* ── Try it panel ── */
+    .try-panel {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .try-header {
+      background: rgba(0,120,212,0.1);
+      border-bottom: 1px solid rgba(0,120,212,0.2);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .try-title { font-size: 11px; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.5px; }
+    .try-body { padding: 16px; }
+
+    .field-group { margin-bottom: 12px; }
+    .field-label { font-size: 11px; color: #64748B; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .field-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #E2E8F0;
+      font-family: "SF Mono", monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus { border-color: #0078D4; }
+    textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.5; }
+
+    .execute-btn {
+      background: #0078D4;
+      color: white;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .execute-btn:hover { background: #005A9E; transform: translateY(-1px); }
+    .execute-btn:active { transform: translateY(0); }
+    .execute-btn.loading { opacity: 0.7; cursor: not-allowed; }
+
+    .response-box {
+      margin-top: 14px;
+      background: #050E1A;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .response-header {
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 11px;
+    }
+    .status-200 { color: #34D399; font-weight: 700; }
+    .status-202 { color: #F59E0B; font-weight: 700; }
+    .status-err { color: #F87171; font-weight: 700; }
+    .response-time { color: #475569; margin-left: auto; }
+    .response-body {
+      padding: 14px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11.5px;
+      color: #94A3B8;
+      white-space: pre-wrap;
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    /* JSON syntax highlighting */
+    .json-key { color: #60A5FA; }
+    .json-str { color: #34D399; }
+    .json-num { color: #F59E0B; }
+    .json-bool { color: #F87171; }
+    .json-null { color: #94A3B8; }
+
+    /* ── Azure services section ── */
+    .azure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+    .azure-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .azure-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .azure-name { font-size: 12px; font-weight: 600; color: white; margin-bottom: 2px; }
+    .azure-desc { font-size: 11px; color: #64748B; line-height: 1.4; }
+
+    /* ── Spacing ── */
+    .mb-32 { margin-bottom: 32px; }
+    .mt-24 { margin-top: 24px; }
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 36px 0; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">RC</div>
+    <div>
+      <div class="api-title">Agentic Document Processing API</div>
+      <div class="api-subtitle">Azure-native · classify → extract → validate → route</div>
+    </div>
+  </div>
+  <div class="version-badges">
+    <span class="badge badge-version">v1.0.0 · OAS 3.1</span>
+    <span class="badge badge-live"><span class="live-dot"></span>Live on localhost:8000</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <a class="sidebar-link active" href="#overview">Architecture</a>
+      <a class="sidebar-link" href="#azure">Azure Services</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Ingestion</div>
+      <a class="sidebar-link" href="#upload">
+        <span class="method-pill pill-post">POST</span>/documents/upload
+      </a>
+      <a class="sidebar-link" href="#text">
+        <span class="method-pill pill-post">POST</span>/documents/text
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Documents</div>
+      <a class="sidebar-link" href="#list">
+        <span class="method-pill pill-get">GET</span>/documents/
+      </a>
+      <a class="sidebar-link" href="#get-doc">
+        <span class="method-pill pill-get">GET</span>/documents/{id}
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Human Review (HITL)</div>
+      <a class="sidebar-link" href="#review-list">
+        <span class="method-pill pill-get">GET</span>/review/
+      </a>
+      <a class="sidebar-link" href="#review-get">
+        <span class="method-pill pill-get">GET</span>/review/{id}
+      </a>
+      <a class="sidebar-link" href="#review-resolve">
+        <span class="method-pill pill-post">POST</span>/review/{id}/resolve
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Observability</div>
+      <a class="sidebar-link" href="#health">
+        <span class="method-pill pill-get">GET</span>/health
+      </a>
+      <a class="sidebar-link" href="#metrics">
+        <span class="method-pill pill-get">GET</span>/metrics
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Portals</div>
+      <a class="sidebar-link" href="http://127.0.0.1:8000/portal" target="_blank">
+        Review Portal (UI)
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-title">Agentic Document <span>Processing API</span></div>
+      <div class="hero-desc">
+        An enterprise-grade AI pipeline built entirely on Microsoft Azure. Autonomously ingests PDFs, emails, invoices and contracts — classifies, extracts structured data, validates against business rules, and routes to the right downstream system. Ambiguous or high-risk documents escalate to a human reviewer with full context.
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-val">95%</div><div class="hero-stat-lbl">Less Manual Work</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">&lt; 5s</div><div class="hero-stat-lbl">Per Document</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">4</div><div class="hero-stat-lbl">AI Agents</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">99.9%</div><div class="hero-stat-lbl">Azure SLA</div></div>
+      </div>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(0,120,212,0.2);color:#60A5FA">IN</div>
+        <div class="step-label">Ingest</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(13,148,136,0.2);color:#2DD4BF">AI</div>
+        <div class="step-label">Classify</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(124,58,237,0.2);color:#A78BFA">EX</div>
+        <div class="step-label">Extract</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(245,158,11,0.2);color:#FCD34D">VAL</div>
+        <div class="step-label">Validate</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(16,185,129,0.2);color:#34D399">RT</div>
+        <div class="step-label">Route</div>
+      </div>
+      <div class="step-arrow" style="color:#374151">↓ low confidence</div>
+      <div class="pipeline-step">
+        <div class="step-circle" style="background:rgba(239,68,68,0.2);color:#F87171">HU</div>
+        <div class="step-label">Human Review</div>
+      </div>
+    </div>
+
+    <!-- Azure Services -->
+    <div id="azure" class="mb-32">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(0,120,212,0.15)">☁️</div>
+        <div>
+          <div class="section-title">Azure Services</div>
+          <div class="section-subtitle">Every component is a managed Azure PaaS service</div>
+        </div>
+      </div>
+      <div class="azure-grid">
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(0,120,212,0.15)">📦</div>
+          <div><div class="azure-name">Azure Blob Storage</div><div class="azure-desc">Raw document ingestion — PDFs, emails, invoices land here first</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(13,148,136,0.15)">🤖</div>
+          <div><div class="azure-name">Azure OpenAI (GPT-4o)</div><div class="azure-desc">Classifier Agent — document type + confidence score</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(124,58,237,0.15)">📄</div>
+          <div><div class="azure-name">Azure Document Intelligence</div><div class="azure-desc">Extractor Agent — structured field extraction from PDFs</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(245,158,11,0.15)">🚌</div>
+          <div><div class="azure-name">Azure Service Bus</div><div class="azure-desc">Durable queue — dead-letter, retry, no lost messages</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(16,185,129,0.15)">⚡</div>
+          <div><div class="azure-name">Azure Container Apps</div><div class="azure-desc">Serverless compute — scales 0→20 based on queue depth</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(239,68,68,0.15)">🔐</div>
+          <div><div class="azure-name">Key Vault + Managed Identity</div><div class="azure-desc">Zero secrets in code — identity-based access only</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(0,120,212,0.15)">🌍</div>
+          <div><div class="azure-name">Cosmos DB</div><div class="azure-desc">Immutable audit trail — every action logged, queryable forever</div></div>
+        </div>
+        <div class="azure-card">
+          <div class="azure-icon" style="background:rgba(13,148,136,0.15)">📊</div>
+          <div><div class="azure-name">Azure Monitor + App Insights</div><div class="azure-desc">Metrics, alerts, distributed traces per document</div></div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- INGESTION ENDPOINTS -->
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.15)">📥</div>
+      <div>
+        <div class="section-title">Document Ingestion</div>
+        <div class="section-subtitle">Submit documents for autonomous processing</div>
+      </div>
+    </div>
+
+    <!-- POST /documents/text -->
+    <div class="endpoint-card" id="text">
+      <div class="endpoint-header" onclick="toggle('ep-text')">
+        <span class="method-badge method-post">POST</span>
+        <span class="endpoint-path">/documents/text</span>
+        <span class="endpoint-desc">Ingest as plain text — great for demos</span>
+        <span class="chevron-btn" id="chev-ep-text">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-text">
+        <div class="body-desc">Submit any document as plain text. The pipeline runs synchronously and returns the full result including classification, extracted fields, validation outcome, routing decision, and complete audit trail.</div>
+        <div class="try-panel">
+          <div class="try-header">
+            <span class="try-title">Try it</span>
+          </div>
+          <div class="try-body">
+            <div class="field-group">
+              <div class="field-label">filename</div>
+              <input class="field-input" id="text-filename" value="invoice.txt"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">text_content</div>
+              <textarea class="field-input" id="text-content">INVOICE
+Vendor: Acme Supplies Ltd
+Invoice No: INV-2024-001
+Total Amount Due: $8,250.00
+Due Date: 2024-02-15
+PO Number: PO-9876</textarea>
+            </div>
+            <button class="execute-btn" onclick="runTextIngest()">▶ Execute</button>
+            <div id="text-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="text-status"></span>
+                <span id="text-dest" style="color:#94A3B8;font-size:11px"></span>
+                <span class="response-time" id="text-time"></span>
+              </div>
+              <div class="response-body" id="text-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /documents/upload -->
+    <div class="endpoint-card" id="upload">
+      <div class="endpoint-header" onclick="toggle('ep-upload')">
+        <span class="method-badge method-post">POST</span>
+        <span class="endpoint-path">/documents/upload</span>
+        <span class="endpoint-desc">Upload a file (PDF, .eml, .txt)</span>
+        <span class="chevron-btn" id="chev-ep-upload">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-upload">
+        <div class="body-desc">Upload any document file. In production, documents arrive via Azure Blob Storage triggered by Event Grid. This endpoint simulates that flow directly.</div>
+        <div class="try-panel">
+          <div class="try-header"><span class="try-title">Try it</span></div>
+          <div class="try-body">
+            <div class="field-group">
+              <div class="field-label">file</div>
+              <input type="file" class="field-input" id="upload-file" style="padding:6px"/>
+            </div>
+            <button class="execute-btn" onclick="runUpload()">▶ Execute</button>
+            <div id="upload-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="upload-status"></span>
+                <span class="response-time" id="upload-time"></span>
+              </div>
+              <div class="response-body" id="upload-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- HUMAN REVIEW -->
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(239,68,68,0.15)">👤</div>
+      <div>
+        <div class="section-title">Human-in-the-Loop Review</div>
+        <div class="section-subtitle">Escalation queue for low-confidence and high-risk documents</div>
+      </div>
+    </div>
+
+    <!-- GET /review/ -->
+    <div class="endpoint-card" id="review-list">
+      <div class="endpoint-header" onclick="toggle('ep-review-list')">
+        <span class="method-badge method-get">GET</span>
+        <span class="endpoint-path">/review/</span>
+        <span class="endpoint-desc">All documents pending review</span>
+        <span class="chevron-btn" id="chev-ep-review-list">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-review-list">
+        <div class="body-desc">Returns all escalated documents with SLA deadlines. In production this feeds the Power Apps review portal. Includes confidence scores, escalation reasons, validation errors, and editable extracted fields.</div>
+        <div class="try-panel">
+          <div class="try-header"><span class="try-title">Try it</span></div>
+          <div class="try-body">
+            <button class="execute-btn" onclick="runGet('/review/', 'rv-list')">▶ Execute</button>
+            <div id="rv-list-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="rv-list-status"></span>
+                <span class="response-time" id="rv-list-time"></span>
+              </div>
+              <div class="response-body" id="rv-list-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /review/{id}/resolve -->
+    <div class="endpoint-card" id="review-resolve">
+      <div class="endpoint-header" onclick="toggle('ep-resolve')">
+        <span class="method-badge method-post">POST</span>
+        <span class="endpoint-path">/review/{doc_id}/resolve</span>
+        <span class="endpoint-desc">Submit human correction and re-process</span>
+        <span class="chevron-btn" id="chev-ep-resolve">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-resolve">
+        <div class="body-desc">Human submits corrections. The document re-enters the pipeline at the validation step (skipping re-classification since the human has confirmed the type). Confidence is set to 1.0 — full human override.</div>
+        <div class="try-panel">
+          <div class="try-header"><span class="try-title">Try it</span></div>
+          <div class="try-body">
+            <div class="field-group">
+              <div class="field-label">doc_id (from review queue)</div>
+              <input class="field-input" id="resolve-id" placeholder="Paste doc_id from GET /review/"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Request body</div>
+              <textarea class="field-input" id="resolve-body" style="min-height:130px">{
+  "reviewer": "jane.smith@rapidcircle.com",
+  "doc_type": "invoice",
+  "extracted_fields": {
+    "vendor_name": "BigCorp International",
+    "invoice_number": "INV-999",
+    "amount": 8000.00,
+    "due_date": "2024-03-01",
+    "po_number": "PO-APPROVED-001"
+  }
+}</textarea>
+            </div>
+            <button class="execute-btn" onclick="runResolve()">▶ Execute</button>
+            <div id="resolve-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="resolve-status"></span>
+                <span id="resolve-dest" style="color:#34D399;font-size:11px;font-weight:600"></span>
+                <span class="response-time" id="resolve-time"></span>
+              </div>
+              <div class="response-body" id="resolve-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- OBSERVABILITY -->
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,120,212,0.15)">📊</div>
+      <div>
+        <div class="section-title">Observability</div>
+        <div class="section-subtitle">Health checks and processing metrics — feeds Azure Monitor</div>
+      </div>
+    </div>
+
+    <!-- GET /health -->
+    <div class="endpoint-card" id="health">
+      <div class="endpoint-header" onclick="toggle('ep-health')">
+        <span class="method-badge method-get">GET</span>
+        <span class="endpoint-path">/health</span>
+        <span class="endpoint-desc">Service health check</span>
+        <span class="chevron-btn" id="chev-ep-health">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-health">
+        <div class="body-desc">Returns service health status. In Azure, this endpoint is polled by Container Apps health probes and Azure Monitor.</div>
+        <div class="try-panel">
+          <div class="try-header"><span class="try-title">Try it</span></div>
+          <div class="try-body">
+            <button class="execute-btn" onclick="runGet('/health', 'health')">▶ Execute</button>
+            <div id="health-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="health-status"></span>
+                <span class="response-time" id="health-time"></span>
+              </div>
+              <div class="response-body" id="health-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /metrics -->
+    <div class="endpoint-card" id="metrics">
+      <div class="endpoint-header" onclick="toggle('ep-metrics')">
+        <span class="method-badge method-get">GET</span>
+        <span class="endpoint-path">/metrics</span>
+        <span class="endpoint-desc">Processing metrics summary</span>
+        <span class="chevron-btn" id="chev-ep-metrics">▼</span>
+      </div>
+      <div class="endpoint-body" id="ep-metrics">
+        <div class="body-desc">Returns processing totals broken down by status, document type and escalation reason. In production this feeds an Azure Monitor Workbook dashboard with live charts.</div>
+        <div class="try-panel">
+          <div class="try-header"><span class="try-title">Try it</span></div>
+          <div class="try-body">
+            <button class="execute-btn" onclick="runGet('/metrics', 'metrics')">▶ Execute</button>
+            <div id="metrics-response" style="display:none" class="response-box">
+              <div class="response-header">
+                <span id="metrics-status"></span>
+                <span class="response-time" id="metrics-time"></span>
+              </div>
+              <div class="response-body" id="metrics-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:60px"></div>
+  </main>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+
+function toggle(id) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev-' + id);
+  body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+}
+
+function syntaxHighlight(json) {
+  if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+    let cls = 'json-num';
+    if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
+    else if (/true|false/.test(match)) cls = 'json-bool';
+    else if (/null/.test(match)) cls = 'json-null';
+    return `<span class="${cls}">${match}</span>`;
+  });
+}
+
+function showResponse(prefix, status, data, ms, extra) {
+  const box = document.getElementById(`${prefix}-response`);
+  const statusEl = document.getElementById(`${prefix}-status`);
+  const timeEl = document.getElementById(`${prefix}-time`);
+  const bodyEl = document.getElementById(`${prefix}-body`);
+  box.style.display = 'block';
+  const cls = status >= 200 && status < 300 ? (status === 202 ? 'status-202' : 'status-200') : 'status-err';
+  statusEl.innerHTML = `<span class="${cls}">${status} ${status===200?'OK':status===202?'Accepted':'Error'}</span>`;
+  timeEl.textContent = `${ms}ms`;
+  bodyEl.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+  if (extra) {
+    const el = document.getElementById(`${prefix}-dest`);
+    if (el) el.textContent = extra;
+  }
+}
+
+async function runGet(path, prefix) {
+  const btn = event.target;
+  btn.classList.add('loading');
+  btn.textContent = 'Loading...';
+  const t = Date.now();
+  try {
+    const r = await fetch(API + path);
+    const data = await r.json();
+    showResponse(prefix, r.status, data, Date.now() - t);
+  } catch(e) {
+    showResponse(prefix, 0, { error: 'Connection refused — is the server running?' }, Date.now() - t);
+  }
+  btn.classList.remove('loading');
+  btn.innerHTML = '▶ Execute';
+}
+
+async function runTextIngest() {
+  const btn = event.target;
+  btn.classList.add('loading'); btn.textContent = 'Processing...';
+  const t = Date.now();
+  try {
+    const r = await fetch(`${API}/documents/text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: document.getElementById('text-filename').value,
+        text_content: document.getElementById('text-content').value
+      })
+    });
+    const data = await r.json();
+    const extra = data.status === 'routed'
+      ? `Routed to: ${data.destination}`
+      : data.status === 'escalated'
+      ? `Escalated: ${data.escalation_reason}`
+      : '';
+    showResponse('text', r.status, data, Date.now() - t, extra);
+  } catch(e) {
+    showResponse('text', 0, { error: 'Connection refused' }, Date.now() - t);
+  }
+  btn.classList.remove('loading'); btn.innerHTML = '▶ Execute';
+}
+
+async function runUpload() {
+  const btn = event.target;
+  const file = document.getElementById('upload-file').files[0];
+  if (!file) { alert('Please select a file first'); return; }
+  btn.classList.add('loading'); btn.textContent = 'Uploading...';
+  const t = Date.now();
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch(`${API}/documents/upload`, { method: 'POST', body: fd });
+    const data = await r.json();
+    showResponse('upload', r.status, data, Date.now() - t);
+  } catch(e) {
+    showResponse('upload', 0, { error: 'Connection refused' }, Date.now() - t);
+  }
+  btn.classList.remove('loading'); btn.innerHTML = '▶ Execute';
+}
+
+async function runResolve() {
+  const btn = event.target;
+  const docId = document.getElementById('resolve-id').value.trim();
+  if (!docId) { alert('Please enter a doc_id'); return; }
+  btn.classList.add('loading'); btn.textContent = 'Submitting...';
+  const t = Date.now();
+  try {
+    const body = JSON.parse(document.getElementById('resolve-body').value);
+    const r = await fetch(`${API}/review/${docId}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    const extra = data.destination ? `Routed to: ${data.destination}` : '';
+    showResponse('resolve', r.status, data, Date.now() - t, extra);
+  } catch(e) {
+    showResponse('resolve', 0, { error: String(e) }, Date.now() - t);
+  }
+  btn.classList.remove('loading'); btn.innerHTML = '▶ Execute';
+}
+
+// Auto-check health on load
+window.addEventListener('load', async () => {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) throw new Error();
+  } catch {
+    document.querySelector('.badge-live').innerHTML = '<span style="width:6px;height:6px;background:#F87171;border-radius:50%;display:inline-block"></span> Server offline';
+    document.querySelector('.badge-live').style.color = '#F87171';
+    document.querySelector('.badge-live').style.borderColor = 'rgba(239,68,68,0.4)';
+    document.querySelector('.badge-live').style.background = 'rgba(239,68,68,0.1)';
+  }
+});
+</script>
+</body>
+</html>
